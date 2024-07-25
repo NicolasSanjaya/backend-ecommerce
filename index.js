@@ -17,12 +17,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(ProductRouter);
 app.use(UserRouter);
 
-// app.get("/", (req, res) => {
-//   return res.json({
-//     message: "Hello World",
-//   });
-// });
-
 app.listen(port, () => {
   console.log(`Server is Listening on http://localhost:${port}`);
 });
