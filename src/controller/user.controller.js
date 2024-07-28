@@ -5,11 +5,12 @@ import { generateToken, verifyToken } from "../utils/jwt.js";
 
 export const test = async (req, res, next) => {
   const user = await prisma.user.findMany();
+  console.log(user);
   return res.json({ user });
 };
 
 export const getUser = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
   if (!token) {
     return res.status(400).json({
       status: false,
@@ -34,7 +35,7 @@ export const getUser = async (req, res, next) => {
           status: true,
           statusCode: 200,
           message: "Success Get Users",
-          data: user,
+          data: verified,
         });
       } else {
         return res.status(400).json({
@@ -60,6 +61,7 @@ export const getUser = async (req, res, next) => {
       data: {},
     });
   }
+  next();
 };
 
 export const login = async (req, res, next) => {
@@ -80,13 +82,19 @@ export const login = async (req, res, next) => {
   const result = comparePassword(password, user.password);
   if (result) {
     delete user.password;
+
     const token = generateToken(user);
+
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      maxAge: 2 * 24 * 60 * 60 * 1000,
+    });
+
     res.status(200).json({
       status: true,
       statusCode: 200,
       message: "Login Success",
       data: user,
-      token,
     });
   } else {
     res.status(400).json({
@@ -124,7 +132,18 @@ export const register = async (req, res, next) => {
       status: false,
       statusCode: 400,
       message: "Register Failed",
-      data: {},
     });
   }
+};
+
+export const logout = (req, res, next) => {
+  console.log(req.cookies);
+  res.cookie("jwt", "", { maxAge: 0 });
+  res.clearCookie("jwt");
+  res.status(200).json({
+    status: true,
+    statusCode: 200,
+    message: "Logout Success",
+    data: {},
+  });
 };
