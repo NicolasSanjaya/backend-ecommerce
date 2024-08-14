@@ -13,3 +13,9 @@ export const verifyToken = (token) => {
     maxAge: "2d",
   });
 };
+
+export const refreshToken = (payload) => {
+  return jsonwebtoken.sign(payload, secret, {
+    expiresIn: "2d",
+  });
+};
