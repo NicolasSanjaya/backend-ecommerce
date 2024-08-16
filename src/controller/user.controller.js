@@ -2,6 +2,30 @@ import { prisma } from "../utils/prisma.js";
 import bcrypt from "bcrypt";
 import { comparePassword } from "../validation/passwordValidation.js";
 import { generateToken, refreshToken, verifyToken } from "../utils/jwt.js";
+import { OAuth2Client } from "google-auth-library";
+import { google } from "googleapis";
+
+// const oauth2Client = new OAuth2Client({
+//   clientId: process.env.GOOGLE_CLIENT_ID,
+//   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+//   redirectUri: process.env.GOOGLE_REDIRECT_URI,
+// });
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
+
+const scopes = [
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
+];
+
+export const authUrl = oauth2Client.generateAuthUrl({
+  access_type: "offline",
+  prompt: "consent",
+  scope: scopes,
+});
 
 export const test = async (req, res, next) => {
   const user = await prisma.user.findMany();
@@ -198,6 +222,87 @@ export const login = async (req, res, next) => {
       data: {},
     });
   }
+};
+
+export const loginWithGoogle = async (req, res, next) => {
+  const { code } = req.query;
+  console.log("Authorization Code:", code);
+
+  const { tokens } = await oauth2Client.getToken(code);
+
+  oauth2Client.setCredentials(tokens);
+
+  const oauth2 = google.oauth2({
+    auth: oauth2Client,
+    version: "v2",
+  });
+
+  const { data } = await oauth2.userinfo.get();
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: data.email,
+    },
+  });
+  if (!user) {
+    const newUser = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        image: data.picture,
+      },
+    });
+
+    delete newUser.password;
+    const token = generateToken(newUser);
+
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      maxAge: 2 * 24 * 60 * 60 * 1000,
+    });
+    res.status(200).json({
+      status: true,
+      statusCode: 200,
+      message: "Login Success",
+      data: newUser,
+    });
+  }
+  if (user.image == null) {
+    const updatedUser = await prisma.user.update({
+      where: {
+        email: user.email,
+      },
+      data: {
+        image: data.picture,
+      },
+    });
+    delete updatedUser.password;
+    const token = generateToken(updatedUser);
+
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      maxAge: 2 * 24 * 60 * 60 * 1000,
+    });
+    res.status(200).json({
+      status: true,
+      statusCode: 200,
+      message: "Login Success",
+      data: updatedUser,
+    });
+  }
+  delete user.password;
+  const token = generateToken(user);
+
+  res.cookie("jwt", token, {
+    httpOnly: true,
+    maxAge: 2 * 24 * 60 * 60 * 1000,
+  });
+  res.status(200).json({
+    status: true,
+    statusCode: 200,
+    message: "Login Success",
+    data: user,
+  });
 };
 
 export const register = async (req, res, next) => {

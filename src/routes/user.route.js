@@ -1,9 +1,11 @@
 import { Router } from "express";
 import {
+  authUrl,
   getCart,
   getUser,
   insertCart,
   login,
+  loginWithGoogle,
   logout,
   register,
   test,
@@ -56,6 +58,13 @@ router.put(
   updateUserImage
 );
 router.post("/user/login", login);
+
+// login with google
+router.get("/auth/google", (req, res) => {
+  res.redirect(authUrl);
+});
+router.get("/auth/google/callback", loginWithGoogle);
+
 router.post("/user/register", register);
 router.post("/user/logout", logout);
 
