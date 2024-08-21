@@ -1,8 +1,11 @@
 import { Router } from "express";
 import {
+  addUserAddress,
   authUrl,
+  deleteUserAddress,
   getCart,
   getUser,
+  getUserAddress,
   insertCart,
   login,
   loginWithGoogle,
@@ -67,6 +70,11 @@ router.get("/auth/google/callback", loginWithGoogle);
 
 router.post("/user/register", register);
 router.post("/user/logout", logout);
+
+// address
+router.get("/user-address", getUserAddress);
+router.put("/user-address", addUserAddress);
+router.delete("/user-address", deleteUserAddress);
 
 // cart
 router.get("/cart", getCart);

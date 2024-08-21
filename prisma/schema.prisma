@@ -15,10 +15,11 @@ model User {
   email     String   @unique
   password  String?
   phone     String?   @db.VarChar(25)
-  address   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  type String?
 
+  address  Address[]
 }
 
 model Product{
@@ -30,7 +31,6 @@ model Product{
   sold String  @default("0")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 }
 
 model Cart{
@@ -42,6 +42,15 @@ model Cart{
   quantity Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
 
+model Address{
+  id String @id @default(uuid())
+  recipient String
+  phone String
+  address String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  User User[]
 }

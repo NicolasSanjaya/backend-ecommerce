@@ -28,7 +28,32 @@ export const authUrl = oauth2Client.generateAuthUrl({
 });
 
 export const test = async (req, res, next) => {
-  const user = await prisma.user.findMany();
+  const user = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      image: true,
+
+      address: true,
+    },
+  });
+  // const address = await prisma.address.findMany({
+  //   where: { id: user.addressId },
+  // });
+  // console.log(address.length);
+
+  // for (let i = 0; i < user.length; i++) {
+  //   for (let j = 0; j < address.length; j++) {
+  //     console.log(address[j]);
+
+  //     if (user[i].id === address[j].user[i].id) {
+  //       user[i].address = address[j];
+  //     }
+  //   }
+  // }
+  // user.address = address;
   return res.json({ user });
 };
 
@@ -48,17 +73,34 @@ export const getUser = async (req, res, next) => {
       email: true,
       phone: true,
       address: true,
+      image: true,
+      type: true,
+      address: true,
     },
   });
+
   try {
     const verified = verifyToken(token);
+
     if (verified) {
+      const user = await prisma.user.findUnique({
+        where: { email: verified.email },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          image: true,
+          type: true,
+          address: true,
+        },
+      });
       if (user) {
         return res.status(200).json({
           status: true,
           statusCode: 200,
           message: "Success Get Users",
-          data: verified,
+          data: user,
         });
       } else {
         return res.status(400).json({
@@ -98,7 +140,7 @@ export const updateUser = async (req, res, next) => {
   }
   const user = verifyToken(token);
   if (user) {
-    const { name, email, phone, address } = req.body;
+    const { name, email, phone } = req.body;
     const updateUser = await prisma.user.update({
       where: {
         id: user.id,
@@ -107,7 +149,6 @@ export const updateUser = async (req, res, next) => {
         name,
         email,
         phone,
-        address,
       },
     });
     if (updateUser) {
@@ -154,6 +195,7 @@ export const updateUserImage = async (req, res, next) => {
       },
       data: {
         image,
+        type: null,
       },
     });
     if (updateUser) {
@@ -189,14 +231,25 @@ export const login = async (req, res, next) => {
       id: true,
       name: true,
       email: true,
+      image: true,
       phone: true,
       address: true,
       password: true,
+      type: true,
     },
     where: {
       email: email,
     },
   });
+
+  if (user.type && user.type === "google") {
+    return res.status(400).json({
+      status: false,
+      statusCode: 400,
+      message: "Login Failed, Please Login with Google",
+      data: {},
+    });
+  }
   const result = comparePassword(password, user.password);
   if (result) {
     delete user.password;
@@ -226,7 +279,6 @@ export const login = async (req, res, next) => {
 
 export const loginWithGoogle = async (req, res, next) => {
   const { code } = req.query;
-  console.log("Authorization Code:", code);
 
   const { tokens } = await oauth2Client.getToken(code);
 
@@ -244,12 +296,14 @@ export const loginWithGoogle = async (req, res, next) => {
       email: data.email,
     },
   });
+
   if (!user) {
     const newUser = await prisma.user.create({
       data: {
         name: data.name,
         email: data.email,
         image: data.picture,
+        type: "google",
       },
     });
 
@@ -260,20 +314,16 @@ export const loginWithGoogle = async (req, res, next) => {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
     });
-    res.status(200).json({
-      status: true,
-      statusCode: 200,
-      message: "Login Success",
-      data: newUser,
-    });
+    return res.redirect("http://localhost:3000");
   }
-  if (user.image == null) {
+  if (user.image === null) {
     const updatedUser = await prisma.user.update({
       where: {
         email: user.email,
       },
       data: {
         image: data.picture,
+        type: "google",
       },
     });
     delete updatedUser.password;
@@ -283,12 +333,7 @@ export const loginWithGoogle = async (req, res, next) => {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
     });
-    res.status(200).json({
-      status: true,
-      statusCode: 200,
-      message: "Login Success",
-      data: updatedUser,
-    });
+    return res.redirect("http://localhost:3000");
   }
   delete user.password;
   const token = generateToken(user);
@@ -297,11 +342,110 @@ export const loginWithGoogle = async (req, res, next) => {
     httpOnly: true,
     maxAge: 2 * 24 * 60 * 60 * 1000,
   });
+  return res.redirect("http://localhost:3000");
+};
+
+export const getUserAddress = async (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
+  if (!token) {
+    return res.status(400).json({
+      status: false,
+      statusCode: 400,
+      message: "Insert a Token",
+    });
+  }
+  const verify = verifyToken(token);
+  const user = await prisma.user.findUnique({
+    where: {
+      id: verify.id,
+    },
+    include: {
+      address: true,
+    },
+  });
+
   res.status(200).json({
     status: true,
     statusCode: 200,
-    message: "Login Success",
-    data: user,
+    message: "Get Address Success",
+    data: user.address,
+  });
+};
+
+export const addUserAddress = async (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
+  if (!token) {
+    return res.status(400).json({
+      status: false,
+      statusCode: 400,
+      message: "Insert a Token",
+    });
+  }
+  const user = verifyToken(token);
+
+  const { recipient, phone, address } = req.body;
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      address: {
+        create: {
+          recipient,
+          phone,
+          address,
+        },
+      },
+    },
+    include: {
+      address: true,
+    },
+  });
+
+  res.status(200).json({
+    status: true,
+    statusCode: 200,
+    message: "Update Address Success",
+    data: updatedUser.address,
+  });
+};
+
+export const deleteUserAddress = async (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
+  if (!token) {
+    return res.status(400).json({
+      status: false,
+      statusCode: 400,
+      message: "Insert a Token",
+    });
+  }
+  const { id } = req.query;
+
+  const updatedAddress = await prisma.address.delete({
+    where: {
+      id: id,
+    },
+    include: {
+      User: true,
+    },
+  });
+
+  if (!updatedAddress) {
+    return res.status(400).json({
+      status: false,
+      statusCode: 400,
+      message: "Delete Address Failed",
+    });
+  }
+
+  const user = verifyToken(token);
+  const updatedUser = await prisma.user.findMany();
+
+  res.status(200).json({
+    status: true,
+    statusCode: 200,
+    message: "Delete Address Success",
+    data: updatedAddress,
   });
 };
 
