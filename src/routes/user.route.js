@@ -13,10 +13,12 @@ import {
   register,
   test,
   updateUser,
+  updateUserAddressIsMain,
   updateUserImage,
 } from "../controller/user.controller.js";
 import multer from "multer";
 import { imageValidation } from "../validation/imageValidation.js";
+import { isAuth } from "../middleware/isAuth.middleware.js";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -48,8 +50,8 @@ const router = Router();
 
 // user
 router.get("/user/test", test);
-router.get("/user", getUser);
-router.put("/user", updateUser);
+router.get("/user", isAuth, getUser);
+router.put("/user", isAuth, updateUser);
 router.put(
   "/user-image",
   multer({
@@ -58,6 +60,7 @@ router.put(
     fileFilter,
   }).single("image"),
   imageValidation,
+  isAuth,
   updateUserImage
 );
 router.post("/user/login", login);
@@ -72,9 +75,10 @@ router.post("/user/register", register);
 router.post("/user/logout", logout);
 
 // address
-router.get("/user-address", getUserAddress);
-router.put("/user-address", addUserAddress);
-router.delete("/user-address", deleteUserAddress);
+router.get("/user-address", isAuth, getUserAddress);
+router.put("/user-address", isAuth, addUserAddress);
+router.delete("/user-address", isAuth, deleteUserAddress);
+router.patch("/user-address-ismain", isAuth, updateUserAddressIsMain);
 
 // cart
 router.get("/cart", getCart);

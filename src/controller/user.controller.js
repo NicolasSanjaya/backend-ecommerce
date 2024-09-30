@@ -58,63 +58,33 @@ export const test = async (req, res, next) => {
 };
 
 export const getUser = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
-  if (!token) {
-    return res.status(400).json({
-      status: false,
-      statusCode: 400,
-      message: "Insert a Token",
-    });
-  }
-  const user = await prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      address: true,
-      image: true,
-      type: true,
-      address: true,
-    },
-  });
+  const { verified } = res;
 
   try {
-    const verified = verifyToken(token);
-
-    if (verified) {
-      const user = await prisma.user.findUnique({
-        where: { email: verified.email },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          image: true,
-          type: true,
-          address: true,
-        },
+    const user = await prisma.user.findUnique({
+      where: { email: verified.email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        image: true,
+        type: true,
+        address: true,
+      },
+    });
+    if (user) {
+      return res.status(200).json({
+        status: true,
+        statusCode: 200,
+        message: "Success Get Users",
+        data: user,
       });
-      if (user) {
-        return res.status(200).json({
-          status: true,
-          statusCode: 200,
-          message: "Success Get Users",
-          data: user,
-        });
-      } else {
-        return res.status(400).json({
-          status: false,
-          statusCode: 400,
-          message: "User Not Found",
-          data: {},
-        });
-      }
     } else {
       return res.status(400).json({
         status: false,
         statusCode: 400,
-        message: "Invalid Token",
+        message: "User Not Found",
         data: {},
       });
     }
@@ -126,20 +96,11 @@ export const getUser = async (req, res, next) => {
       data: {},
     });
   }
-  next();
 };
 
 export const updateUser = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
-  if (!token) {
-    return res.status(400).json({
-      status: false,
-      statusCode: 400,
-      message: "Insert a Token",
-    });
-  }
-  const user = verifyToken(token);
-  if (user) {
+  const { verified } = res;
+  if (verified) {
     const { name, email, phone } = req.body;
     const updateUser = await prisma.user.update({
       where: {
@@ -178,16 +139,8 @@ export const updateUser = async (req, res, next) => {
 };
 
 export const updateUserImage = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
-  if (!token) {
-    return res.status(400).json({
-      status: false,
-      statusCode: 400,
-      message: "Insert a Token",
-    });
-  }
-  const user = verifyToken(token);
-  if (user) {
+  const { verified } = res;
+  if (verified) {
     const image = req.file.destination + "/" + req.file.filename;
     const updateUser = await prisma.user.update({
       where: {
@@ -346,18 +299,11 @@ export const loginWithGoogle = async (req, res, next) => {
 };
 
 export const getUserAddress = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
-  if (!token) {
-    return res.status(400).json({
-      status: false,
-      statusCode: 400,
-      message: "Insert a Token",
-    });
-  }
-  const verify = verifyToken(token);
+  const { verified } = res;
+
   const user = await prisma.user.findUnique({
     where: {
-      id: verify.id,
+      id: verified.id,
     },
     include: {
       address: true,
@@ -373,20 +319,12 @@ export const getUserAddress = async (req, res, next) => {
 };
 
 export const addUserAddress = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
-  if (!token) {
-    return res.status(400).json({
-      status: false,
-      statusCode: 400,
-      message: "Insert a Token",
-    });
-  }
-  const user = verifyToken(token);
+  const { verified } = res;
 
   const { recipient, phone, address } = req.body;
   const updatedUser = await prisma.user.update({
     where: {
-      id: user.id,
+      id: verified.id,
     },
     data: {
       address: {
@@ -409,16 +347,37 @@ export const addUserAddress = async (req, res, next) => {
     data: updatedUser.address,
   });
 };
+export const updateUserAddressIsMain = async (req, res, next) => {
+  const { verified } = res;
+
+  const { id } = req.query;
+  const updatedUserFalse = await prisma.address.updateMany({
+    data: {
+      isMain: false,
+    },
+  });
+
+  const updatedUserTrue = await prisma.address.update({
+    where: {
+      id: id,
+    },
+    data: {
+      isMain: true,
+    },
+  });
+
+  const updatedUser = await prisma.address.findMany();
+
+  res.status(200).json({
+    status: true,
+    statusCode: 200,
+    message: "Update Address Success",
+    data: updatedUser,
+  });
+};
 
 export const deleteUserAddress = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
-  if (!token) {
-    return res.status(400).json({
-      status: false,
-      statusCode: 400,
-      message: "Insert a Token",
-    });
-  }
+  const { verified } = res;
   const { id } = req.query;
 
   const updatedAddress = await prisma.address.delete({
@@ -438,7 +397,6 @@ export const deleteUserAddress = async (req, res, next) => {
     });
   }
 
-  const user = verifyToken(token);
   const updatedUser = await prisma.user.findMany();
 
   res.status(200).json({
@@ -490,19 +448,11 @@ export const logout = (req, res, next) => {
 };
 
 export const getCart = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
-  if (!token) {
-    return res.status(400).json({
-      status: false,
-      statusCode: 400,
-      message: "Insert a Token",
-    });
-  }
-  const user = verifyToken(token);
-  if (user) {
+  const { verified } = res;
+  if (verified) {
     const cart = await prisma.cart.findMany({
       where: {
-        userId: user.id,
+        userId: verified.id,
       },
     });
     const product = await prisma.product.findMany({
@@ -530,16 +480,8 @@ export const getCart = async (req, res, next) => {
 };
 
 export const insertCart = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
-  if (!token) {
-    return res.status(400).json({
-      status: false,
-      statusCode: 400,
-      message: "Insert a Token",
-    });
-  }
-  const user = verifyToken(token);
-  if (user) {
+  const { verified } = res;
+  if (verified) {
     const product = await prisma.product.findUnique({
       where: {
         id: req.body.product_id,
