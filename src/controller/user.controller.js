@@ -1,9 +1,9 @@
 import { prisma } from "../utils/prisma.js";
 import bcrypt from "bcrypt";
 import { comparePassword } from "../validation/passwordValidation.js";
-import { generateToken, refreshToken, verifyToken } from "../utils/jwt.js";
-import { OAuth2Client } from "google-auth-library";
+import { generateToken, refreshToken } from "../utils/jwt.js";
 import { google } from "googleapis";
+import { deleteImageCloudinary } from "../lib/cloudinary.js";
 
 // const oauth2Client = new OAuth2Client({
 //   clientId: process.env.GOOGLE_CLIENT_ID,
@@ -141,13 +141,24 @@ export const updateUser = async (req, res, next) => {
 export const updateUserImage = async (req, res, next) => {
   const { verified } = res;
   if (verified) {
-    const image = req.file.destination + "/" + req.file.filename;
+    // const image = req.file.destination + "/" + req.file.filename;
+    const image = verified.image;
+    const imageDelete = image
+      .split("/")
+      [image.split("/").length - 1].split(".")[0];
+
+    const deleteResult = await deleteImageCloudinary(
+      `ecommerce/${imageDelete}`
+    );
+
+    console.log({ deleteResult });
+
     const updateUser = await prisma.user.update({
       where: {
-        id: user.id,
+        id: verified.id,
       },
       data: {
-        image,
+        image: res.data.secure_url,
         type: null,
       },
     });

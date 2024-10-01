@@ -15,12 +15,11 @@ const checkFile = async (path) => {
 };
 
 export const imageValidation = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
+  const { verified } = res;
   const file = await readFile(req.file.path);
   const type = await fileTypeFromBuffer(file);
-  const user = verifyToken(token);
 
-  const isExist = await checkFile(user.image);
+  await checkFile(verified.image);
 
   if (
     type.mime !== "image/jpg" &&
