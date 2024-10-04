@@ -8,6 +8,8 @@ import {
 } from "../controller/product.controller.js";
 import multer from "multer";
 import { imageValidation } from "../validation/imageValidation.js";
+import { upload } from "../utils/uploadFile.js";
+import { handleUploadCloudinary } from "../lib/cloudinary.js";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -41,15 +43,16 @@ router.get("/products", getAllProducts);
 router.get("/product/:id", getProductById);
 router.post(
   "/product",
-  multer({
-    storage: storage,
-    limits: { fileSize: FILE_SIZE },
-    fileFilter,
-  }).single("image"),
-  imageValidation,
+  upload.single("image"),
+  handleUploadCloudinary,
   createProduct
 );
-router.put("/product/:id", updateProduct);
+router.put(
+  "/product/:id",
+  upload.single("image"),
+  handleUploadCloudinary,
+  updateProduct
+);
 router.delete("/product", deleteProduct);
 
 export default router;

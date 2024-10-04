@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import { createReadStream } from "streamifier";
+import { prisma } from "../utils/prisma.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -33,21 +34,12 @@ export const cloudinaryConfig = async () => {
 };
 
 export const handleUploadCloudinary = async (req, res, next) => {
-  // console.log(file);
+  if (req.file === undefined || req.file === null) {
+    res.changeImage = false;
+    return next();
+  }
 
-  // const uploadResult = await cloudinary.uploader
-  //   .upload(file.originalname, {
-  //     resource_type: "image",
-  //     upload_preset: "ecommerce",
-  //     folder: "ecommerce",
-  //   })
-  //   .then((result) => {
-  //     return result;
-  //   })
-  //   .catch((error) => {
-  //     console.log(error);
-  //   });
-  // return uploadResult;
+  res.changeImage = true;
   const fileBuffer = req.file.buffer;
 
   const uploadStream = cloudinary.uploader.upload_stream(

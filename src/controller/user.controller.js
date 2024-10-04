@@ -141,7 +141,6 @@ export const updateUser = async (req, res, next) => {
 export const updateUserImage = async (req, res, next) => {
   const { verified } = res;
   if (verified) {
-    // const image = req.file.destination + "/" + req.file.filename;
     const image = verified.image;
     const imageDelete = image
       .split("/")
@@ -150,8 +149,6 @@ export const updateUserImage = async (req, res, next) => {
     const deleteResult = await deleteImageCloudinary(
       `ecommerce/${imageDelete}`
     );
-
-    console.log({ deleteResult });
 
     const updateUser = await prisma.user.update({
       where: {
@@ -278,7 +275,7 @@ export const loginWithGoogle = async (req, res, next) => {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
     });
-    return res.redirect("http://localhost:3000");
+    return res.redirect(process.env.FRONTEND_URL);
   }
   if (user.image === null) {
     const updatedUser = await prisma.user.update({
