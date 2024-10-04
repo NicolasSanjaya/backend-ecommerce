@@ -294,7 +294,7 @@ export const loginWithGoogle = async (req, res, next) => {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
     });
-    return res.redirect("http://localhost:3000");
+    return res.redirect(process.env.FRONTEND_URL);
   }
   delete user.password;
   const token = generateToken(user);
@@ -303,7 +303,7 @@ export const loginWithGoogle = async (req, res, next) => {
     httpOnly: true,
     maxAge: 2 * 24 * 60 * 60 * 1000,
   });
-  return res.redirect("http://localhost:3000");
+  return res.redirect(process.env.FRONTEND_URL);
 };
 
 export const getUserAddress = async (req, res, next) => {
