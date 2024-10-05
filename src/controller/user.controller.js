@@ -74,12 +74,6 @@ export const getUser = async (req, res, next) => {
       },
     });
     if (user) {
-      res.cookie("jwt", refresh, {
-        httpOnly: true,
-        maxAge: 2 * 24 * 60 * 60 * 1000,
-        sameSite: "none",
-        secure: true,
-      });
       return res.status(200).json({
         status: true,
         statusCode: 200,
@@ -234,14 +228,14 @@ export const login = async (req, res, next) => {
       secure: true,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       status: true,
       statusCode: 200,
       message: "Login Success",
       data: user,
     });
   } else {
-    res.status(400).json({
+    return res.status(400).json({
       status: false,
       statusCode: 400,
       message: "Login Failed",
