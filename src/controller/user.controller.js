@@ -121,6 +121,7 @@ export const updateUser = async (req, res, next) => {
         httpOnly: true,
         maxAge: 2 * 24 * 60 * 60 * 1000,
         sameSite: "none",
+        secure: true,
       });
       return res.status(200).json({
         status: true,
@@ -169,6 +170,7 @@ export const updateUserImage = async (req, res, next) => {
         httpOnly: true,
         maxAge: 2 * 24 * 60 * 60 * 1000,
         sameSite: "none",
+        secure: true,
       });
       return res.status(200).json({
         status: true,
@@ -223,6 +225,7 @@ export const login = async (req, res, next) => {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
       sameSite: "none",
+      secure: true,
     });
 
     res.status(200).json({
@@ -278,6 +281,7 @@ export const loginWithGoogle = async (req, res, next) => {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
       sameSite: "none",
+      secure: true,
     });
     return res.redirect(process.env.FRONTEND_URL);
   }
@@ -298,6 +302,7 @@ export const loginWithGoogle = async (req, res, next) => {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
       sameSite: "none",
+      secure: true,
     });
     return res.redirect(process.env.FRONTEND_URL);
   }
@@ -308,6 +313,7 @@ export const loginWithGoogle = async (req, res, next) => {
     httpOnly: true,
     maxAge: 2 * 24 * 60 * 60 * 1000,
     sameSite: "none",
+    secure: true,
   });
   return res.redirect(process.env.FRONTEND_URL);
 };
