@@ -458,7 +458,12 @@ export const register = async (req, res, next) => {
 
 export const logout = (req, res, next) => {
   // res.cookie("jwt", "", { maxAge: 0 });
-  res.clearCookie("jwt");
+  res.clearCookie("jwt", {
+    sameSite: "none",
+    secure: true,
+    path: "/",
+    httpOnly: true,
+  });
   res.status(200).json({
     status: true,
     statusCode: 200,
