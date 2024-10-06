@@ -120,7 +120,7 @@ export const updateUser = async (req, res, next) => {
       res.cookie("jwt", refresh, {
         httpOnly: true,
         maxAge: 2 * 24 * 60 * 60 * 1000,
-        sameSite: "none",
+        sameSite: "lax",
         secure: true,
       });
       return res.status(200).json({
@@ -169,7 +169,7 @@ export const updateUserImage = async (req, res, next) => {
       res.cookie("jwt", refresh, {
         httpOnly: true,
         maxAge: 2 * 24 * 60 * 60 * 1000,
-        sameSite: "none",
+        sameSite: "lax",
         secure: true,
       });
       return res.status(200).json({
@@ -224,7 +224,7 @@ export const login = async (req, res, next) => {
     res.cookie("jwt", token, {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
     });
 
@@ -280,7 +280,7 @@ export const loginWithGoogle = async (req, res, next) => {
     res.cookie("jwt", token, {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
     });
     return res.redirect(process.env.FRONTEND_URL);
@@ -301,7 +301,7 @@ export const loginWithGoogle = async (req, res, next) => {
     res.cookie("jwt", token, {
       httpOnly: true,
       maxAge: 2 * 24 * 60 * 60 * 1000,
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
     });
     return res.redirect(process.env.FRONTEND_URL);
@@ -312,7 +312,7 @@ export const loginWithGoogle = async (req, res, next) => {
   res.cookie("jwt", token, {
     httpOnly: true,
     maxAge: 2 * 24 * 60 * 60 * 1000,
-    sameSite: "none",
+    sameSite: "lax",
     secure: true,
   });
   return res.redirect(process.env.FRONTEND_URL);
